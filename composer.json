@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-4": {
-            "andrewdanilov\\Thumbs\\": "src/"
+            "andrewdanilov\\thumbs\\": "src/"
         }
     }
 }

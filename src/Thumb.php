@@ -1,6 +1,6 @@
 <?php
 
-namespace andrewdanilov\Thumbs;
+namespace andrewdanilov\thumbs;
 
 use Yii;
 use yii\imagine\Image;
