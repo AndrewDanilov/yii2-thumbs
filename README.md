@@ -1,6 +1,6 @@
-Resize and cache images helper
+Resize and cache image widget
 ===========
-Provides helper class for resizing and caching images to use it in views
+Provides widget class for resizing and caching images
 
 Installation
 ------------
@@ -25,4 +25,6 @@ to the require section of your `composer.json` file.
 Usage
 -----
 
-todo
+```php
+<img src="<?= \andrewdanilov\thumbs\Thumb::widget(['image' => 'images/img.png', 'sizes' => '200x200']) ?>" />
+```
