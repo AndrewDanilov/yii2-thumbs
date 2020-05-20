@@ -1,5 +1,4 @@
 <?php
-
 namespace andrewdanilov\thumbs;
 
 use Yii;
@@ -20,18 +19,30 @@ class Thumb extends Widget
 	public $sizes = '100x100';
 	public $zc = true;
 
+	public function init()
+	{
+		parent::init();
+		if ($this->noImageUri !== null) {
+			$this->noImageUri = Yii::getAlias($this->noImageUri);
+			if (!file_exists($this->noImageUri)) {
+				$this->noImageUri = null;
+			}
+		}
+		if ($this->noImageUri === null) {
+			$this->noImageUri = Yii::getAlias('@andrewdanilov/thumbs/web/images/noimage.png');
+		}
+	}
+
 	/**
-	 * Возвращает uri к закэшированному варианту файла.
-	 * Если файла в кэше нет, то создает его.
-	 * Если нет исходного файла, то создает кэш дефолтного изображения.
+	 * Returns uri to cached file.
+	 * If there is no cached version, method will create it.
+	 * If source file doesn't exist, method creates cached
+	 * version of default 'noImage' file and returns uri to it.
 	 *
 	 * @inheritdoc
 	 */
 	public function run()
 	{
-		ThumbAsset::register($this->getView());
-		$directoryAsset = Yii::$app->assetManager->getPublishedUrl('@andrewdanilov/thumbs');
-
 		if (is_array($this->sizes)) {
 			$width = array_key_exists('width', $this->sizes) ? $this->sizes['width'] : 0;
 			$height = array_key_exists('height', $this->sizes) ? $this->sizes['height'] : 0;
@@ -49,21 +60,11 @@ class Thumb extends Widget
 			$this->zc = false;
 		}
 
-		if ($this->noImageUri == null) {
-			$this->noImageUri = $directoryAsset . '/images/noimage.png';
-		}
-
-		if (!$this->image) {
-			$this->image = Yii::getAlias($this->noImageUri);
-		}
-
 		$image_uri = urldecode(trim($this->image, '/'));
 		$image_path = Yii::getAlias('@webroot/' . $image_uri);
 
-		if (!file_exists($image_path)) {
-			$image_uri = Yii::getAlias($this->noImageUri);
-			$image_uri = trim($image_uri, '/');
-			$image_path = Yii::getAlias('@webroot/' . $image_uri);
+		if (!$image_uri || !file_exists($image_path)) {
+			$this->image = $this->noImageUri;
 		}
 
 		$image_ext = pathinfo($image_uri, PATHINFO_EXTENSION);
