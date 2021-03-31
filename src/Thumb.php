@@ -70,7 +70,7 @@ class Thumb extends Widget
 		$image_ext = pathinfo($image_uri, PATHINFO_EXTENSION);
 
 		// если не картинка, то возвращаем исходный путь
-		if (!in_array(strtolower($image_ext), ['jpg', 'jpeg', 'png', 'gif'])) {
+		if (!in_array(strtolower($image_ext), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
 			return $image_uri;
 		}
 
