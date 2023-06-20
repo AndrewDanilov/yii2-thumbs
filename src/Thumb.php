@@ -99,6 +99,6 @@ class Thumb extends Widget
 				->save($cached_image_path, ['quality' => $this->quality]);
 		}
 
-		return $cached_image_uri;
+		return Yii::getAlias('@web/') . $cached_image_uri;
 	}
 }
