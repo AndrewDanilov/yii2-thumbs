@@ -8,29 +8,29 @@ use Imagine\Image\ImageInterface;
 
 class Thumb extends Widget
 {
-	public $cachedImageUriPath = '@web/assets/thumbs/';
-	public $noImageUri;
-	public $cacheTime = 604800;
-
-	public $backgroundColor = 'transparent'; // 'transparent', 'FFF', '000000'
-	public $quality = 90;
-
-	public $image; // 'images/img.png'
-	public $sizes = '100x100';
+	public $image; // '/images/img.png'
+	public $sizes = '100x100'; // '100x100', '400x', 'x200', ['width' => '100', 'height' => '100'], ['width' => '400'], ['height' => '200']
 	public $zc = true;
+	public $quality = 90; // 1..100
+	public $backgroundColor = 'transparent'; // 'transparent', 'FFF', '000000'
+
+	public $noImageUri; // '/images/noimg.png'
+	public $cachePath; // '/assets/thumbs/'
+	public $cacheTime; // 604800
 
 	public function init()
 	{
 		parent::init();
 		if ($this->noImageUri !== null) {
-			$this->noImageUri = Yii::getAlias($this->noImageUri);
-			if (!file_exists($this->noImageUri)) {
-				$this->noImageUri = null;
-			}
+            $uri = urldecode(trim($this->noImageUri, '/'));
+			$this->noImageUri = Yii::getAlias('@web/' . $uri);
 		}
-		if ($this->noImageUri === null) {
-			$this->noImageUri = Yii::getAlias('@andrewdanilov/thumbs/web/images/noimage.png');
-		}
+        if (!$this->cachePath) {
+            $this->cachePath = '/assets/thumbs/';
+        }
+        if (!$this->cacheTime) {
+            $this->cacheTime = 604800;
+        }
 	}
 
 	/**
@@ -63,23 +63,27 @@ class Thumb extends Widget
 		$image_uri = urldecode(trim($this->image, '/'));
 		$image_path = Yii::getAlias('@webroot/' . $image_uri);
 
-		if (!$image_uri || !file_exists($image_path)) {
-			$this->image = $this->noImageUri;
-		}
+        // если исходного файла нет, то возвращаем заглушку
+		if (!is_file($image_path)) {
+            return $this->noImageUri;
+        }
+
+        $image_uri = Yii::getAlias('@web/' . $image_uri);
 
 		$image_ext = pathinfo($image_uri, PATHINFO_EXTENSION);
 
-		// если не картинка, то возвращаем исходный путь
+        // если не картинка, то возвращаем заглушку
 		if (!in_array(strtolower($image_ext), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-			return $image_uri;
+			return $this->noImageUri;
 		}
 
 		$hash = md5($image_uri . ':' . (int)$width . ':' . (int)$height . ':' . (int)$this->zc . ':' . $this->quality);
+		$hashed_image_pathname = $width . 'x' . $height . '/' . substr($hash, 0, 1) . '/' . substr($hash, 1) . '.' . $image_ext;
 
-		$cached_image_uri = trim(Yii::getAlias($this->cachedImageUriPath), '/') . '/' . $width . 'x' . $height . '/' . substr($hash, 0, 1) . '/' . substr($hash, 1) . '.' . $image_ext;
-		$cached_image_path = Yii::getAlias('@webroot/' . $cached_image_uri);
+        $cache_uri = urldecode(trim($this->cachePath, '/')) . '/' . $hashed_image_pathname;
+		$cache_path = Yii::getAlias('@webroot/' . $cache_uri);
 
-		if (!file_exists($cached_image_path) || filemtime($cached_image_path) + $this->cacheTime < time()) {
+		if (!file_exists($cache_path) || filemtime($cache_path) + $this->cacheTime < time()) {
 			if ($this->zc) {
 				// crop the input image, if required
 				$mode = ImageInterface::THUMBNAIL_OUTBOUND;
@@ -88,7 +92,7 @@ class Thumb extends Widget
 				$mode = ImageInterface::THUMBNAIL_INSET;
 			}
 
-			@mkdir(dirname($cached_image_path), 0777, true);
+			@mkdir(dirname($cache_path), 0777, true);
 			if (!$this->backgroundColor || ($this->backgroundColor == 'transparent')) {
 				Image::$thumbnailBackgroundAlpha = 0;
 			} else {
@@ -96,9 +100,9 @@ class Thumb extends Widget
 				Image::$thumbnailBackgroundColor = $this->backgroundColor;
 			}
 			Image::thumbnail($image_path, $width, $height, $mode)
-				->save($cached_image_path, ['quality' => $this->quality]);
+				->save($cache_path, ['quality' => $this->quality]);
 		}
 
-		return Yii::getAlias('@web/') . $cached_image_uri;
+		return Yii::getAlias('@web/') . $cache_uri;
 	}
 }
